@@ -7,3 +7,4 @@ all: all-the-onions
 
 clean:
 	-rm allonions
+
