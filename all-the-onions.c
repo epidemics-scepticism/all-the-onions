@@ -16,38 +16,7 @@
 */
 
 #include <stdio.h>
-#include <stdint.h>
-
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint64_t u64;
-
-static const u8 onion_digits[33] = "abcdefghijklmnopqrstuvwxyz234567";
-
-static u8
-onion_char(u8 c)
-{
-	return onion_digits[c & 0x1f];
-}
-
-static void
-onion_encode(const u8 *in)
-{
-	u8 out[17] = { 0 };
-	u64 i = 0, j, x, out_sz = 0;
-
-	while (i < 10) {
-		x = 0;
-		while (i < 10) {
-			x |= (u64)in[i] << ((4 - i % 5) * 8);
-			if (!(++i % 5)) break;
-		}
-		for (j = 0; j < 8; j++) {
-			out[out_sz++] = onion_char(x >> (7 - j) * 5);
-		}
-	}
-	printf("%s.onion\n", out);
-}
+#include "onion.h"
 
 static void
 onion_next(u8 *o)
@@ -61,18 +30,19 @@ onion_next(u8 *o)
 static u8
 onion_done(const u8 *o)
 {
-	u8 r = 0;
-	for (u8 i = 0; i < 10; i++) r |= o[i];
-	return r;
+	for (u8 i = 0; i < 10; i++)
+		if (o[i]) return o[i];
+	return 0;
 }
 
 int
 main(void)
 {
-	unsigned char o[10] = { 0 };
+	u8 o[17] = { 0 }, i[10] = { 0 };
 	do {
-		onion_encode(o);
-		onion_next(o);
-	} while (onion_done(o));
+		onion_encode(o, i);
+		printf("%s.onion\n", (char *)o);
+		onion_next(i);
+	} while (onion_done(i));
 	return 0;
 }
